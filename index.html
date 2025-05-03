@@ -81,8 +81,7 @@
     function renderTable(data) {
       table.innerHTML = "";
       const filtered = data.filter(est => {
-        return (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) &&
-        return (!minArea.value || est.area >= parseFloat(minArea.value)) &&
+        (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) && (!minArea.value || est.area >= parseFloat(minArea.value)) &&
                (!maxArea.value || est.area <= parseFloat(maxArea.value)) &&
                (!minPricePerMeter.value || est.pricePerMeter >= parseFloat(minPricePerMeter.value)) &&
                (!maxPricePerMeter.value || est.pricePerMeter <= parseFloat(maxPricePerMeter.value)) &&
@@ -142,4 +141,3 @@
   </script>
 </body>
 </html>
-
