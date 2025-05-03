@@ -3,14 +3,12 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>مدیریت املاک شخصی</title>
+  <title>مدیریت املاک ابری</title>
   <style>
     body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; direction: rtl; font-size: 18px; }
-    h1 { text-align: center; }
-    input, button { font-size: 18px; margin: 5px 0; padding: 8px; width: 100%; box-sizing: border-box; }
+    input, button { width: 100%; padding: 10px; margin: 5px 0; font-size: 16px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { font-size: 16px; border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 16px; }
     .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
   </style>
 </head>
@@ -46,85 +44,101 @@
         <th>خواب</th>
         <th>قیمت هر متر</th>
         <th>قیمت کل</th>
-        <th>عملیات</th>
       </tr>
     </thead>
     <tbody id="estateTable"></tbody>
   </table>
 
   <script>
-    const form = document.getElementById('estateForm');
-    const estateTable = document.getElementById('estateTable');
-    const searchOwner = document.getElementById('searchOwner');
-    const minArea = document.getElementById('minArea');
-    const maxArea = document.getElementById('maxArea');
-    const minPricePerMeter = document.getElementById('minPricePerMeter');
-    const maxPricePerMeter = document.getElementById('maxPricePerMeter');
-    const minTotalPrice = document.getElementById('minTotalPrice');
-    const maxTotalPrice = document.getElementById('maxTotalPrice');
+    const form = document.getElementById("estateForm");
+    const table = document.getElementById("estateTable");
+    const url = "https://script.google.com/macros/s/AKfycbxG9e7VNF0au9X-cFRyLns56vCq3ED6XK1f24WUQ0uO__3oAuBwl5JxjFvFgPvOiCbi/exec";
 
-    let estates = JSON.parse(localStorage.getItem('estates')) || [];
+    const searchOwner = document.getElementById("searchOwner");
+    const minArea = document.getElementById("minArea");
+    const maxArea = document.getElementById("maxArea");
+    const minPricePerMeter = document.getElementById("minPricePerMeter");
+    const maxPricePerMeter = document.getElementById("maxPricePerMeter");
+    const minTotalPrice = document.getElementById("minTotalPrice");
+    const maxTotalPrice = document.getElementById("maxTotalPrice");
 
-    function saveData() {
-      localStorage.setItem('estates', JSON.stringify(estates));
+    function saveToLocal(data) {
+      let estates = JSON.parse(localStorage.getItem("estates")) || [];
+      estates.push(data);
+      localStorage.setItem("estates", JSON.stringify(estates));
     }
 
-    function renderTable() {
-      estateTable.innerHTML = '';
-      const filtered = estates.filter(est => {
-        return (
-          (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) &&
-          (!minArea.value || est.area >= parseFloat(minArea.value)) &&
-          (!maxArea.value || est.area <= parseFloat(maxArea.value)) &&
-          (!minPricePerMeter.value || est.pricePerMeter >= parseFloat(minPricePerMeter.value)) &&
-          (!maxPricePerMeter.value || est.pricePerMeter <= parseFloat(maxPricePerMeter.value)) &&
-          (!minTotalPrice.value || est.totalPrice >= parseFloat(minTotalPrice.value)) &&
-          (!maxTotalPrice.value || est.totalPrice <= parseFloat(maxTotalPrice.value))
-        );
+    function loadData() {
+      fetch(url + "?action=getData")
+        .then(res => res.json())
+        .then(data => {
+          localStorage.setItem("estates", JSON.stringify(data));
+          renderTable(data);
+        })
+        .catch(err => console.error("Error loading data:", err));
+    }
+
+    function renderTable(data) {
+      table.innerHTML = "";
+      const filtered = data.filter(est => {
+        return (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) &&
+        return (!minArea.value || est.area >= parseFloat(minArea.value)) &&
+               (!maxArea.value || est.area <= parseFloat(maxArea.value)) &&
+               (!minPricePerMeter.value || est.pricePerMeter >= parseFloat(minPricePerMeter.value)) &&
+               (!maxPricePerMeter.value || est.pricePerMeter <= parseFloat(maxPricePerMeter.value)) &&
+               (!minTotalPrice.value || est.totalPrice >= parseFloat(minTotalPrice.value)) &&
+               (!maxTotalPrice.value || est.totalPrice <= parseFloat(maxTotalPrice.value));
       });
 
-      filtered.forEach((est, index) => {
-        const row = document.createElement('tr');
+      filtered.forEach(est => {
+        const row = document.createElement("tr");
         row.innerHTML = `
           <td>${est.owner}</td>
-          <td>${est.floor || ""}</td>
+          <td>${est.floor}</td>
           <td>${est.area}</td>
-          <td>${est.bedroom || ""}</td>
+          <td>${est.bedroom}</td>
           <td>${est.pricePerMeter}</td>
           <td>${est.totalPrice}</td>
-          <td><button onclick="deleteEstate(${index})">حذف</button></td>
         `;
-        estateTable.appendChild(row);
+        table.appendChild(row);
       });
     }
 
-    function deleteEstate(index) {
-      estates.splice(index, 1);
-      saveData();
-      renderTable();
-    }
-
-    form.addEventListener('submit', e => {
+    form.addEventListener("submit", e => {
       e.preventDefault();
-      const newEstate = {
+      const data = {
         owner: form.owner.value,
-        area: parseFloat(form.area.value),
-        pricePerMeter: parseFloat(form.pricePerMeter.value),
-        totalPrice: parseFloat(form.totalPrice.value),
         floor: form.floor.value,
-        bedroom: form.bedroom.value
+        area: parseFloat(form.area.value),
+        bedroom: form.bedroom.value,
+        pricePerMeter: parseFloat(form.pricePerMeter.value),
+        totalPrice: parseFloat(form.totalPrice.value)
       };
-      estates.push(newEstate);
-      saveData();
-      renderTable();
-      form.reset();
+
+      fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data),
+        mode: "no-cors"
+      })
+      .then(() => {
+        saveToLocal(data);
+        form.reset();
+        loadData();
+      })
+      .catch(err => console.error("Error saving data:", err));
     });
 
     [searchOwner, minArea, maxArea, minPricePerMeter, maxPricePerMeter, minTotalPrice, maxTotalPrice].forEach(input => {
-      input.addEventListener('input', renderTable);
+      input.addEventListener("input", () => {
+        const estates = JSON.parse(localStorage.getItem("estates")) || [];
+        renderTable(estates);
+      });
     });
 
-    renderTable();
+    loadData();
   </script>
 </body>
 </html>
