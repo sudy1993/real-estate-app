@@ -3,7 +3,7 @@
 <html lang="fa">
 <head>
   <meta charset="UTF-8">
-  <title>مدیریت املاک ابری</title>
+  <title>مدیریت املاک</title>
   <style>
     body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; direction: rtl; font-size: 18px; }
     input, button { width: 100%; padding: 10px; margin: 5px 0; font-size: 16px; }
@@ -52,7 +52,7 @@
   <script>
     const form = document.getElementById("estateForm");
     const table = document.getElementById("estateTable");
-    const url = "https://script.google.com/macros/s/AKfycbxG9e7VNF0au9X-cFRyLns56vCq3ED6XK1f24WUQ0uO__3oAuBwl5JxjFvFgPvOiCbi/exec";
+    const url = "https://script.google.com/macros/s/AKfycbwTgIz7fx8tz6Kf1lf6XaC5QiXBsWg9t_RNyvh3QvKj6-P5hCBZZ_RuGwxC9m5qn4Pr/exec";
 
     const searchOwner = document.getElementById("searchOwner");
     const minArea = document.getElementById("minArea");
@@ -61,12 +61,6 @@
     const maxPricePerMeter = document.getElementById("maxPricePerMeter");
     const minTotalPrice = document.getElementById("minTotalPrice");
     const maxTotalPrice = document.getElementById("maxTotalPrice");
-
-    function saveToLocal(data) {
-      let estates = JSON.parse(localStorage.getItem("estates")) || [];
-      estates.push(data);
-      localStorage.setItem("estates", JSON.stringify(estates));
-    }
 
     function loadData() {
       fetch(url + "?action=getData")
@@ -80,14 +74,15 @@
 
     function renderTable(data) {
       table.innerHTML = "";
-      const filtered = data.filter(est => {
-        (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) && (!minArea.value || est.area >= parseFloat(minArea.value)) &&
-               (!maxArea.value || est.area <= parseFloat(maxArea.value)) &&
-               (!minPricePerMeter.value || est.pricePerMeter >= parseFloat(minPricePerMeter.value)) &&
-               (!maxPricePerMeter.value || est.pricePerMeter <= parseFloat(maxPricePerMeter.value)) &&
-               (!minTotalPrice.value || est.totalPrice >= parseFloat(minTotalPrice.value)) &&
-               (!maxTotalPrice.value || est.totalPrice <= parseFloat(maxTotalPrice.value));
-      });
+      const filtered = data.filter(est =>
+        (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) &&
+        (!minArea.value || parseFloat(est.area) >= parseFloat(minArea.value)) &&
+        (!maxArea.value || parseFloat(est.area) <= parseFloat(maxArea.value)) &&
+        (!minPricePerMeter.value || parseFloat(est.pricePerMeter) >= parseFloat(minPricePerMeter.value)) &&
+        (!maxPricePerMeter.value || parseFloat(est.pricePerMeter) <= parseFloat(maxPricePerMeter.value)) &&
+        (!minTotalPrice.value || parseFloat(est.totalPrice) >= parseFloat(minTotalPrice.value)) &&
+        (!maxTotalPrice.value || parseFloat(est.totalPrice) <= parseFloat(maxTotalPrice.value))
+      );
 
       filtered.forEach(est => {
         const row = document.createElement("tr");
@@ -116,14 +111,10 @@
 
       fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(data),
-        mode: "no-cors"
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
       })
       .then(() => {
-        saveToLocal(data);
         form.reset();
         loadData();
       })
