@@ -1,134 +1,119 @@
-
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>مدیریت املاک</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
-    body { font-family: sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; direction: rtl; font-size: 18px; }
-    input, button { width: 100%; padding: 10px; margin: 5px 0; font-size: 16px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 16px; }
-    .filters { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    body {
+      font-family: sans-serif;
+      direction: rtl;
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+      font-size: 18px;
+    }
+    input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      font-size: 16px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>مدیریت املاک</h1>
 
-  <form id="estateForm">
-    <input type="text" id="owner" placeholder="نام مالک" required>
-    <input type="number" id="floor" placeholder="طبقه">
-    <input type="number" step="0.01" id="area" placeholder="متراژ (متر مربع)" required>
-    <input type="number" id="bedroom" placeholder="تعداد خواب">
-    <input type="number" step="0.01" id="pricePerMeter" placeholder="قیمت هر متر (تومان)" required>
-    <input type="number" step="0.01" id="totalPrice" placeholder="قیمت کل (تومان)" required>
-    <button type="submit">افزودن ملک</button>
-  </form>
+<h1>مدیریت املاک</h1>
 
-  <div class="filters">
-    <input type="text" id="searchOwner" placeholder="جستجوی نام مالک">
-    <input type="number" id="minArea" placeholder="حداقل متراژ">
-    <input type="number" id="maxArea" placeholder="حداکثر متراژ">
-    <input type="number" id="minPricePerMeter" placeholder="حداقل قیمت هر متر">
-    <input type="number" id="maxPricePerMeter" placeholder="حداکثر قیمت هر متر">
-    <input type="number" id="minTotalPrice" placeholder="حداقل قیمت کل">
-    <input type="number" id="maxTotalPrice" placeholder="حداکثر قیمت کل">
-  </div>
+<form id="estateForm">
+  <input type="text" id="owner" placeholder="نام مالک" required />
+  <input type="number" id="floor" placeholder="طبقه" />
+  <input type="number" id="area" placeholder="متراژ (متر مربع)" step="0.01" required />
+  <input type="number" id="bedroom" placeholder="تعداد خواب" />
+  <input type="number" id="pricePerMeter" placeholder="قیمت هر متر (تومان)" step="0.01" required />
+  <input type="number" id="totalPrice" placeholder="قیمت کل (تومان)" step="0.01" required />
+  <button type="submit">افزودن ملک</button>
+</form>
 
-  <table>
-    <thead>
-      <tr>
-        <th>نام مالک</th>
-        <th>طبقه</th>
-        <th>متراژ</th>
-        <th>خواب</th>
-        <th>قیمت هر متر</th>
-        <th>قیمت کل</th>
-      </tr>
-    </thead>
-    <tbody id="estateTable"></tbody>
-  </table>
+<table id="estateTable">
+  <thead>
+    <tr>
+      <th>نام مالک</th>
+      <th>طبقه</th>
+      <th>متراژ</th>
+      <th>خواب</th>
+      <th>قیمت هر متر</th>
+      <th>قیمت کل</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <script>
-    const form = document.getElementById("estateForm");
-    const table = document.getElementById("estateTable");
-    const url = "https://script.google.com/macros/s/AKfycbzmolPDTBSnGrZhhyaS7HqTQGUNSrEDFF2_92PoWarKAqsB3Tr0rs_QIXRgXaO_Ad1T/exec";
+<script>
+  const supabase = supabase.createClient(
+    "https://mcxrjcycszhdxpoeyaco.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1jeHJqY3ljc3poZHhwb2V5YWNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYzMDQ0MjQsImV4cCI6MjA2MTg4MDQyNH0.bgXGjU1ep2UQMC2EAAr2jPku2tKWx72yxs_0mXBYDVw"
+  );
 
-    const searchOwner = document.getElementById("searchOwner");
-    const minArea = document.getElementById("minArea");
-    const maxArea = document.getElementById("maxArea");
-    const minPricePerMeter = document.getElementById("minPricePerMeter");
-    const maxPricePerMeter = document.getElementById("maxPricePerMeter");
-    const minTotalPrice = document.getElementById("minTotalPrice");
-    const maxTotalPrice = document.getElementById("maxTotalPrice");
+  const form = document.getElementById("estateForm");
+  const table = document.getElementById("estateTable").querySelector("tbody");
 
-    function loadData() {
-      fetch(url + "?action=getData")
-        .then(res => res.json())
-        .then(data => {
-          localStorage.setItem("estates", JSON.stringify(data));
-          renderTable(data);
-        })
-        .catch(err => console.error("Error loading data:", err));
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const data = {
+      owner: form.owner.value,
+      floor: parseInt(form.floor.value || 0),
+      area: parseFloat(form.area.value),
+      bedroom: parseInt(form.bedroom.value || 0),
+      price_per_meter: parseFloat(form.pricePerMeter.value),
+      total_price: parseFloat(form.totalPrice.value)
+    };
+
+    const { error } = await supabase.from("mehrdad").insert([data]);
+
+    if (error) {
+      alert("خطا در ذخیره‌سازی: " + error.message);
+    } else {
+      alert("با موفقیت ذخیره شد!");
+      form.reset();
+      loadData();
     }
+  });
 
-    function renderTable(data) {
+  async function loadData() {
+    const { data, error } = await supabase.from("mehrdad").select("*").order("created_at", { ascending: false });
+
+    if (!error) {
       table.innerHTML = "";
-      const filtered = data.filter(est =>
-        (!searchOwner.value || est.owner.toLowerCase().includes(searchOwner.value.toLowerCase())) &&
-        (!minArea.value || parseFloat(est.area) >= parseFloat(minArea.value)) &&
-        (!maxArea.value || parseFloat(est.area) <= parseFloat(maxArea.value)) &&
-        (!minPricePerMeter.value || parseFloat(est.pricePerMeter) >= parseFloat(minPricePerMeter.value)) &&
-        (!maxPricePerMeter.value || parseFloat(est.pricePerMeter) <= parseFloat(maxPricePerMeter.value)) &&
-        (!minTotalPrice.value || parseFloat(est.totalPrice) >= parseFloat(minTotalPrice.value)) &&
-        (!maxTotalPrice.value || parseFloat(est.totalPrice) <= parseFloat(maxTotalPrice.value))
-      );
-
-      filtered.forEach(est => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${est.owner}</td>
-          <td>${est.floor}</td>
-          <td>${est.area}</td>
-          <td>${est.bedroom}</td>
-          <td>${est.pricePerMeter}</td>
-          <td>${est.totalPrice}</td>
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.owner}</td>
+          <td>${row.floor}</td>
+          <td>${row.area}</td>
+          <td>${row.bedroom}</td>
+          <td>${row.price_per_meter}</td>
+          <td>${row.total_price}</td>
         `;
-        table.appendChild(row);
+        table.appendChild(tr);
       });
     }
+  }
 
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      const data = {
-        owner: form.owner.value,
-        floor: form.floor.value,
-        area: parseFloat(form.area.value),
-        bedroom: form.bedroom.value,
-        pricePerMeter: parseFloat(form.pricePerMeter.value),
-        totalPrice: parseFloat(form.totalPrice.value)
-      };
+  loadData();
+</script>
 
-      fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data)
-      })
-      .then(() => {
-        form.reset();
-        loadData();
-      })
-      .catch(err => console.error("Error saving data:", err));
-    });
-
-    [searchOwner, minArea, maxArea, minPricePerMeter, maxPricePerMeter, minTotalPrice, maxTotalPrice].forEach(input => {
-      input.addEventListener("input", () => {
-        const estates = JSON.parse(localStorage.getItem("estates")) || [];
-        renderTable(estates);
-      });
-    });
-
-    loadData();
-  </script>
 </body>
 </html>
